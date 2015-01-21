@@ -3,6 +3,7 @@
 *.xml
 *.htm
 *.log
+*.xls
 
 #################
 ## Visual Studio
