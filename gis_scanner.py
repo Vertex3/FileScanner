@@ -169,7 +169,9 @@ def writeFileContents(xmlDoc,parent,file,filetype):
  
     if filetype == '.mxd':
         xmlDoc = writelayers(xmlDoc,parent,file,filetype)
-    elif filetype in ['.gdb','.sde','.shp','.dwg','.dgn']:
+    elif filetype == '.sde':
+        xmlDoc = writesdeinfo(xmlDoc,parent,file,filetype)
+    elif filetype in ['.gdb','.shp','.dwg','.dgn']:
         xmlDoc = writedatasets(xmlDoc,parent,file,filetype)
     else:
         pprint ('Type not handled ' + filetype)
@@ -234,6 +236,36 @@ def writedatasets(xmlDoc,parent,file,filetype):
                     rowcount = 0
                 elem.setAttribute('rowcount',str(rowcount))
     return xmlDoc
+
+def writesdeinfo(xmlDoc,parent,file,filetype):
+   
+    mode = ''
+    database = ''
+    instance = ''
+    server = ''
+    user = ''
+    
+    try:
+        desc = arcpy.Describe(file)
+        mode = desc.connectionProperties.authentication_mode
+        database = desc.connectionProperties.database
+        instance = desc.connectionProperties.instance
+        server = desc.connectionProperties.server
+        if mode != 'OSA':
+            user = desc.connectionProperties.user
+    except:
+        pass
+
+    node = xmlDoc.createElement('Dataset')
+    elem = parent.appendChild(node)
+    elem.setAttribute('mode',mode)
+    elem.setAttribute('database',database)
+    elem.setAttribute('instance',instance)
+    elem.setAttribute('server',server)
+    elem.setAttribute('user',user)
+                  
+    return xmlDoc
+
 
 def pprint(strval):
     print strval
