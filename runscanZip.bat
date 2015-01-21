@@ -1,5 +1,5 @@
 gis_scanner.py T:\ .zip files
-xsltgen.exe out\results.xml ShowResults.xsl out\resultsZip.htm
-xsltgen.exe out\results.xml ShowLargestFiles.xsl out\resultsLargestFiles.htm
-xsltgen.exe out\results.xml ShowFileCountByRootdir.xsl out\resultsFilesByRootdir.htm
+xsltgen.exe out\results.xml ShowResultsExcel.xsl out\resultsZip.xls
+xsltgen.exe out\results.xml ShowLargestFilesExcel.xsl out\resultsLargestFiles.xls
+xsltgen.exe out\results.xml ShowFileCountByRootdirExcel.xsl out\resultsFilesByRootdir.xls
 xcopy out outZip /I /Y /S
