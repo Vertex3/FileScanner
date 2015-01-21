@@ -12,6 +12,6 @@ outhtmlfile = os.path.join(outfolder,'results.htm')
 xsltjs = os.path.join(rootfolder,'runxslt.js')
 xsl_filename = os.path.join(rootfolder,'ShowResults.xsl')
 
-gisexts = '.shp,.gdb,.mxd' # .sde is probably not needed here...
+gisexts = '.shp,.gdb,.mxd,.sde' 
 cadexts = '.dwg,.dgn'
 exclude = 'Program Files,Windows,$Recycle.Bin'
