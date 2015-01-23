@@ -16,3 +16,4 @@ gisexts = '.shp,.gdb,.mxd,.sde'
 cadexts = '.dwg,.dgn'
 exclude = 'Program Files,Windows,$Recycle.Bin'
 oldMapSuffix = '_9.3.mxd'
+timeout = 120 # timeout for accessing a gdb file
