@@ -37,9 +37,13 @@ except:
  
 try:
     import arcpy # if arcpy not present then do files
+    res = arcpy.CheckProduct('ArcView')
+    if res == 'Available':
+        res = arcpy.SetProduct('ArcView')
+    print ('License ' + res)
 except:
     mode = None
- 
+    
 if mode not in ['files','contents']:
     mode = 'files' # default is 'files'
   
@@ -70,24 +74,25 @@ def main(argv = None):
                     for extension in srch:
                         for filename in fnmatch.filter(filenames, '*' + extension):       
                             matches.append(os.path.join(root, filename))
-                            file = os.path.join(root, filename)
-                            file = re.sub(r'[^\x00-\x7f]',' ',file)
-                            pprint(file)
-                            xmlDoc = writeFileInfo(xmlDoc,file,extension)
-    except Exception, err:
+                            fil = os.path.join(root, filename)
+                            fil = re.sub(r'[^\x00-\x7f]',' ',fil)
+                            pprint(fil)
+                            xmlDoc = writeFileInfo(xmlDoc,fil,extension)
+    except Exception as err:
+        print 'Process failed'
         pprint(traceback.format_exc())
-
-    pprint(str(len(matches)) + ' matches found for ' + str(srch))
-    saveXmlDoc(xmlDoc)
-    del matches, xmlDoc
-    log.close()
+    finally:
+        pprint(str(len(matches)) + ' matches found for ' + str(srch))
+        saveXmlDoc(xmlDoc)
+        del matches, xmlDoc
+        log.close()
 
 def cleanupFolder(folder):
     pprint('Removing existing files from ' + folder)
     for root, dirnames, filenames in os.walk(folder):
-        for file in filenames:
+        for fil in filenames:
             try:
-                os.remove(os.path.join(folder,file))
+                os.remove(os.path.join(folder,fil))
             except:
                 pass
 
@@ -104,20 +109,20 @@ def startXmlDocument():
     return xmlDoc
  
  
-def writeFileInfo(xmlDoc,file,filetype):
-    filename = os.path.basename(file)
-    rootdir = os.path.dirname(file)
+def writeFileInfo(xmlDoc,fil,filetype):
+    filename = os.path.basename(fil)
+    rootdir = os.path.dirname(fil)
     creation = ''
     lastmod = ''
     lastmods = ''
     filesize = ''
     try:
-        creation = formatDate(os.path.getctime(file))
-        lastmod = formatDate(os.path.getmtime(file))
-        lastmods = os.path.getmtime(file)
-        filesize = os.path.getsize(file)
+        creation = formatDate(os.path.getctime(fil))
+        lastmod = formatDate(os.path.getmtime(fil))
+        lastmods = os.path.getmtime(fil)
+        filesize = os.path.getsize(fil)
         if filename.endswith('.gdb'):
-            filesize = getGdbSize(file)
+            filesize = getGdbSize(fil)
         if filesize > 0:
             filesize = round((filesize / 1024),4) # turn to KB
     except:
@@ -138,15 +143,15 @@ def writeFileInfo(xmlDoc,file,filetype):
     source.setAttribute('filesize',str(filesize))
  
     if mode == 'contents':
-        xmlDoc = writeFileContents(xmlDoc,node,file,filetype)
+        xmlDoc = writeFileContents(xmlDoc,node,fil,filetype)
  
     return xmlDoc
 
-def getGdbSize(file):
+def getGdbSize(fil):
     gdbsize = 0
-    for f in os.listdir(file):
+    for f in os.listdir(fil):
         try:
-            gdbsize = gdbsize + os.path.getsize(os.path.join(file,f))
+            gdbsize = gdbsize + os.path.getsize(os.path.join(fil,f))
         except:
             pass
     return gdbsize
@@ -165,61 +170,64 @@ def saveXmlDoc(xmlDoc):
    
     pprint('Completed successfully')
  
-def writeFileContents(xmlDoc,parent,file,filetype):
+def writeFileContents(xmlDoc,parent,fil,filetype):
  
     if filetype == '.mxd':
-        xmlDoc = writelayers(xmlDoc,parent,file,filetype)
+        xmlDoc = writelayers(xmlDoc,parent,fil,filetype)
     elif filetype == '.sde':
-        xmlDoc = writesdeinfo(xmlDoc,parent,file,filetype)
+        xmlDoc = writesdeinfo(xmlDoc,parent,fil,filetype)
     elif filetype in ['.gdb','.shp','.dwg','.dgn']:
-        xmlDoc = writedatasets(xmlDoc,parent,file,filetype)
+        xmlDoc = writedatasets(xmlDoc,parent,fil,filetype)
     else:
         pprint ('Type not handled ' + filetype)
  
     return xmlDoc
  
-def writelayers(xmlDoc,parent,file,filetype):
-   
-    mxd = arcpy.mapping.MapDocument(file)
-    try:
-        for lyr in arcpy.mapping.ListLayers(mxd):
-            pprint( "Layer: " + lyr.name)
-            name = lyr.name
-            type = ''
-            source = ''
-            server = ''
-            path = ''
-            if lyr.supports("SERVICEPROPERTIES"):
-                servProp = lyr.serviceProperties
-                if lyr.serviceProperties["ServiceType"] != "SDE":
-                    type = servProp.get('ServiceType', 'N/A')
-                    source = servProp.get('URL', 'N/A')
-                    server = servProp.get('Server', 'N/A')
-                else:
-                    type = servProp.get('ServiceType', 'N/A')
-                    source = servProp.get('Database', 'N/A')
-                    server = servProp.get('Server', 'N/A')
-            
-            elif lyr.isFeatureLayer:
-                    type = 'FeatureLayer'
-                    path = lyr.dataSource
-                    name = lyr.longName
-               
-            node = xmlDoc.createElement('Layer')
-            elem = parent.appendChild(node)
-            elem.setAttribute('name',name)
-            elem.setAttribute('path',path)
-            elem.setAttribute('source',source)
-            elem.setAttribute('server',server)
-            elem.setAttribute('type',type)
-    except Exception, err:
-        pprint(traceback.format_exc())
-           
+def writelayers(xmlDoc,parent,fil,filetype):
+
+    if not fil.endswith(settings.oldMapSuffix):
+        try:
+            mxd = arcpy.mapping.MapDocument(fil)
+            for lyr in arcpy.mapping.ListLayers(mxd):
+                pprint( "Layer: " + lyr.name)
+                name = lyr.name
+                type = ''
+                source = ''
+                server = ''
+                path = ''
+                if lyr.supports("SERVICEPROPERTIES"):
+                    servProp = lyr.serviceProperties
+                    if lyr.serviceProperties["ServiceType"] != "SDE":
+                        type = servProp.get('ServiceType', 'N/A')
+                        source = servProp.get('URL', 'N/A')
+                        server = servProp.get('Server', 'N/A')
+                    else:
+                        type = servProp.get('ServiceType', 'N/A')
+                        source = servProp.get('Database', 'N/A')
+                        server = servProp.get('Server', 'N/A')
+                
+                elif lyr.isFeatureLayer:
+                        type = 'FeatureLayer'
+                        path = lyr.dataSource
+                        name = lyr.longName
+                   
+                node = xmlDoc.createElement('Layer')
+                elem = parent.appendChild(node)
+                elem.setAttribute('name',name)
+                elem.setAttribute('path',path)
+                elem.setAttribute('source',source)
+                elem.setAttribute('server',server)
+                elem.setAttribute('type',type)
+        except Exception as err:
+            print err
+            pprint(traceback.format_exc())
+        finally:
+            print 'layers complete'
     return xmlDoc
  
-def writedatasets(xmlDoc,parent,file,filetype):
-   
-    for dirpath, dirnames, filenames in arcpy.da.Walk(file,topdown=True,followlinks=True):
+def writedatasets(xmlDoc,parent,fil,filetype):
+
+    for dirpath, dirnames, filenames in arcpy.da.Walk(fil,topdown=True,followlinks=True):
         for filename in filenames:
             if filename not in ['Point','Line','Polyline','Polygon','MultiPatch','Annotation']:
                 pprint("Dataset: " + filename)
@@ -265,6 +273,50 @@ def writesdeinfo(xmlDoc,parent,file,filetype):
     elem.setAttribute('user',user)
                   
     return xmlDoc
+
+def listDatasets(gdb):
+    # list all of the datasets and tables
+    dsNames = []
+    dsFullNames = []
+    arcpy.env.workspace = gdb
+    addMessageLocal("Getting list of Datasets from " + gdb)
+    wsDatasets = arcpy.ListDatasets()
+    wsTables = arcpy.ListTables()
+    if wsDatasets:
+        for fds in wsDatasets:
+            desc = arcpy.Describe(fds)
+            if desc.DatasetType == "FeatureDataset" :
+                arcpy.env.workspace = desc.CatalogPath
+                fcs = arcpy.ListFeatureClasses()
+                for fc in fcs:
+                    descfc = arcpy.Describe(fc)
+                    if descfc.DatasetType == "FeatureClass":
+                        dsNames.append(nameTrimmer(fc))
+                        dsFullNames.append(desc.CatalogPath + os.sep + fc)
+                        if debug:
+                            arcpy.AddMessage(desc.CatalogPath + os.sep + fc)
+            arcpy.env.workspace = gdb
+
+    arcpy.env.workspace = gdb
+    fcs = arcpy.ListFeatureClasses()
+    for fClass in fcs:
+        descfc = arcpy.Describe(fClass)
+        if descfc.DatasetType == "FeatureClass":
+            dsNames.append(nameTrimmer(fClass))
+            dsFullNames.append(gdb + os.sep + fClass)
+            if debug:
+                arcpy.AddMessage(gdb + os.sep + fClass)
+
+    arcpy.env.workspace = gdb
+    for table in wsTables:
+        descfc = arcpy.Describe(table)
+        if descfc.DatasetType == "Table":
+            dsNames.append(nameTrimmer(table))
+            dsFullNames.append(gdb + os.sep + table)
+            if debug:
+                arcpy.AddMessage(gdb + os.sep + table)
+
+    return([dsNames,dsFullNames])
 
 
 def pprint(strval):
