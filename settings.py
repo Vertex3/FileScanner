@@ -15,3 +15,4 @@ xsl_filename = os.path.join(rootfolder,'ShowResults.xsl')
 gisexts = '.shp,.gdb,.mxd,.sde' 
 cadexts = '.dwg,.dgn'
 exclude = 'Program Files,Windows,$Recycle.Bin'
+oldMapSuffix = '_9.3.mxd'
