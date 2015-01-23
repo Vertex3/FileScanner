@@ -119,32 +119,42 @@
 					<Row>
 						<xsl:for-each select="./@*">
 							<xsl:variable name="nm" select="local-name(.)"/>
+											<xsl:variable name="typ">
+												<xsl:choose>
+													<xsl:when test="number(.)">
+														<xsl:value-of select="'Number'"/>
+													</xsl:when>
+													<xsl:otherwise>
+														<xsl:value-of select="'String'"/>
+													</xsl:otherwise>
+												</xsl:choose>
+											</xsl:variable>
 							<xsl:if test="$nm != 'lastmodms'">
 								<xsl:choose>
 									<xsl:when test="$nm='filename'">
 										<Cell>
-											<Data ss:Type="String">
+											<Data ss:Type="{$typ}">
 												<xsl:value-of select="."/>
 											</Data>
 										</Cell>
 									</xsl:when>
 									<xsl:when test="$nm='filesize'">
 										<Cell>
-											<Data ss:Type="Number">
+											<Data ss:Type="{$typ}">
 												<xsl:value-of select="format-number(.,'#0.0')"/>
 											</Data>
 										</Cell>
 									</xsl:when>
 									<xsl:when test="$nm='rowcount'">
 										<Cell>
-											<Data ss:Type="Number">
+											<Data ss:Type="{$typ}">
 												<xsl:value-of select="format-number(.,'#0')"/>
 											</Data>
 										</Cell>
 									</xsl:when>
 									<xsl:otherwise>
 										<Cell>
-											<Data ss:Type="String">
+											<Data ss:Type="{$typ}">
 												<xsl:value-of select="."/>
 											</Data>
 										</Cell>
@@ -262,9 +272,10 @@
 									</xsl:variable>
 									<xsl:variable name="lcount" select="count(//Layer[@path=$fullname])"/>
 									<Cell>
-										<Data><xsl:attribute name="ss:Type">
-										    <xsl:value-of select="'Number'"/>
-										</xsl:attribute>
+										<Data>
+											<xsl:attribute name="ss:Type">
+												<xsl:value-of select="'Number'"/>
+											</xsl:attribute>
 											<xsl:value-of select="$lcount"/>
 										</Data>
 									</Cell>
@@ -281,7 +292,7 @@
 		<xsl:param name="attr"/>
 
 		<xsl:variable name="sum">
-			<xsl:value-of select="sum(./FileScanner/Files/File[@filetype=$attr]/@filesize) div 1024"/>
+			<xsl:value-of select="sum(FileScanner/Files/File[@filetype=$attr]/@filesize) div 1024"/>
 		</xsl:variable>
 		<xsl:if test="$sum &gt; 0">
 			<Row>
@@ -292,7 +303,7 @@
 				</Cell>
 				<Cell>
 					<Data ss:Type="Number">
-						<xsl:value-of select="count(FileScanner/Files/File[@filetype=$attr])"/>
+						<xsl:value-of select="count(//File[@filetype=$attr])"/>
 					</Data>
 				</Cell>
 				<Cell>
@@ -337,8 +348,8 @@
 
 <metaInformation>
 	<scenarios>
-		<scenario default="yes" name="Scenario1" userelativepaths="yes" externalpreview="no" url="outCAppsDeep\results.xml" htmlbaseurl="" outputurl="out\results.xls" processortype="msxmldotnet" useresolver="no" profilemode="0" profiledepth=""
-		          profilelength="" urlprofilexml="" commandline="" additionalpath="" additionalclasspath="" postprocessortype="none" postprocesscommandline="" postprocessadditionalpath="" postprocessgeneratedext="" validateoutput="no" validator="internal"
+		<scenario default="yes" name="Scenario1" userelativepaths="yes" externalpreview="no" url="out\results.xml" htmlbaseurl="" outputurl="out\results.xls" processortype="msxmldotnet" useresolver="no" profilemode="0" profiledepth="" profilelength=""
+		          urlprofilexml="" commandline="" additionalpath="" additionalclasspath="" postprocessortype="none" postprocesscommandline="" postprocessadditionalpath="" postprocessgeneratedext="" validateoutput="no" validator="internal"
 		          customvalidator="">
 			<advancedProp name="sInitialMode" value=""/>
 			<advancedProp name="schemaCache" value="||"/>
